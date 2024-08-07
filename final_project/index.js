@@ -1,37 +1,42 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const session = require('express-session');
-const customer_routes = require('./router/auth_users.js').authenticated;
-const genl_routes = require('./router/general.js').general;
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const session = require("express-session");
+const customer_routes = require("./router/auth_users.js").authenticated;
+const genl_routes = require("./router/general.js").general;
 
 const app = express();
 
 app.use(express.json());
 
-app.use("/customer", session({
+app.use(
+  "/customer",
+  session({
     secret: "fingerprint_customer",
     resave: true,
-    saveUninitialized: true
-}));
+    saveUninitialized: true,
+  })
+);
 
 app.use("/customer/auth/*", function auth(req, res, next) {
-    if (!req.session || !req.session.token) {
-        return res.status(401).json({ message: 'Access denied. No session token provided.' });
-    }
+  if (req.session.authorization) {
+    let token = req.session.authorization["accessToken"];
 
-    const token = req.session.token;
-    try {
-        const decoded = jwt.verify(token, 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6'); // Using the generated secret key
-        req.user = decoded;
+    jwt.verify(token, "access", (err, user) => {
+      if (!err) {
+        req.user = user;
         next();
-    } catch (ex) {
-        res.status(400).json({ message: 'Invalid session token.' });
-    }
- });
+      } else {
+        return res.status(403).json({ message: "User not authenticated." });
+      }
+    });
+  } else {
+    return res.status(403).json({ message: "User not logged in." });
+  }
+});
 
-const PORT = 5500;
+const PORT = process.env.PORT || 5500;
 
 app.use("/customer", customer_routes);
 app.use("/", genl_routes);
 
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
