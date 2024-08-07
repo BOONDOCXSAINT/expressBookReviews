@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const session = require('express-session');
+const axios = require('axios');
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
@@ -18,41 +19,54 @@ public_users.post("/register", (req, res) => {
     return res.status(201).json({ message: 'User registered successfully' });
 });
 
-public_users.get('/', function (req, res) {
-    const booksList = JSON.stringify(books, null, 2);
-    return res.status(200).json(booksList);
+// Get the book list available in the shop using async-await with Axios
+public_users.get('/', async function (req, res) {
+    try {
+        const response = await axios.get('http://your-api-endpoint/books'); // Replace with your actual API endpoint
+        const booksList = response.data;
+        res.status(200).json(booksList);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching books list' });
+    }
 });
 
-public_users.get('/isbn/:isbn', function (req, res) {
+// Get book details based on ISBN using async-await with Axios
+public_users.get('/isbn/:isbn', async function (req, res) {
     const isbn = req.params.isbn;
-    const book = books.find(book => book.isbn === isbn);
-    if (book) {
-        return res.status(200).json(book);
-    } else {
-        return res.status(404).json({ message: 'Book not found' });
+    try {
+        const response = await axios.get(`http://your-api-endpoint/books/isbn/${isbn}`); // Replace with your actual API endpoint
+        const bookDetails = response.data;
+        res.status(200).json(bookDetails);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching book details' });
     }
 });
 
-public_users.get('/author/:author', function (req, res) {
+// Get book details based on author using async-await with Axios
+public_users.get('/author/:author', async function (req, res) {
     const author = req.params.author;
-    const booksByAuthor = books.filter(book => book.author === author);
-    if (booksByAuthor.length > 0) {
-        return res.status(200).json(booksByAuthor);
-    } else {
-        return res.status(404).json({ message: 'Books by this author not found' });
+    try {
+        const response = await axios.get(`http://your-api-endpoint/books/author/${author}`); // Replace with your actual API endpoint
+        const booksByAuthor = response.data;
+        res.status(200).json(booksByAuthor);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching books by author' });
     }
 });
 
-public_users.get('/title/:title', function (req, res) {
+// Get book details based on title using async-await with Axios
+public_users.get('/title/:title', async function (req, res) {
     const title = req.params.title;
-    const book = books.find(book => book.title === title);
-    if (book) {
-        return res.status(200).json(book);
-    } else {
-        return res.status(404).json({ message: 'Book not found' });
+    try {
+        const response = await axios.get(`http://your-api-endpoint/books/title/${title}`); // Replace with your actual API endpoint
+        const bookDetails = response.data;
+        res.status(200).json(bookDetails);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching book details' });
     }
 });
 
+// Get book review
 public_users.get('/review/:isbn', function (req, res) {
     const isbn = req.params.isbn;
     const book = books.find(book => book.isbn === isbn);
